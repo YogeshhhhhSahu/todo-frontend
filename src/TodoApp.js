@@ -1,36 +1,46 @@
 import { useState, useEffect } from "react";
+import axios from "axios";  // Import axios
 import "./TodoApp.css";
+
+const API_URL = "http://localhost:5000/api/tasks";  // Backend URL
 
 function TodoApp() {
     const [tasks, setTasks] = useState([]);
-
-    useEffect(() => {
-        const storedTasks = JSON.parse(localStorage.getItem("tasks"));
-        if (storedTasks) {
-            setTasks(storedTasks);
-        }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-    }, [tasks]);
-
     const [task, setTask] = useState("");
 
+    // Fetch tasks from backend
+    useEffect(() => {
+        axios.get(API_URL)
+            .then(res => setTasks(res.data))
+            .catch(err => console.error(err));
+    }, []);
+
+    // Add Task
     function addTask() {
         if (task.trim() === "") return;
-        setTasks([...tasks, { text: task, completed: false }]);
+        axios.post(API_URL, { text: task })
+            .then(res => setTasks([...tasks, res.data]))
+            .catch(err => console.error(err));
         setTask("");
     }
 
-    function removeTask(index) {
-        setTasks(tasks.filter((_, i) => i !== index));
+    // Remove Task
+    function removeTask(id) {
+        axios.delete(`${API_URL}/${id}`)
+            .then(() => setTasks(tasks.filter(task => task._id !== id)))
+            .catch(err => console.error(err));
     }
 
-    function toggleTask(index) {
-        const newTasks = [...tasks];
-        newTasks[index].completed = !newTasks[index].completed;
-        setTasks(newTasks);
+    // Toggle Task Completion
+    function toggleTask(id) {
+        const updatedTask = tasks.find(task => task._id === id);
+        axios.put(`${API_URL}/${id}`, { completed: !updatedTask.completed })
+            .then(res => {
+                setTasks(tasks.map(task =>
+                    task._id === id ? res.data : task
+                ));
+            })
+            .catch(err => console.error(err));
     }
 
     return (
@@ -43,11 +53,11 @@ function TodoApp() {
             </div>
 
             <ul>
-                {tasks.map((t, index) => (
-                    <li key={index} style={{ textDecoration: t.completed ? "line-through" : "none" }}>
-                        <input type="checkbox" checked={t.completed} onChange={() => toggleTask(index)} />
+                {tasks.map((t) => (
+                    <li key={t._id} style={{ textDecoration: t.completed ? "line-through" : "none" }}>
+                        <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t._id)} />
                         {t.text}
-                        <button className="delete-btn" onClick={() => removeTask(index)}>
+                        <button className="delete-btn" onClick={() => removeTask(t._id)}>
                             ❌
                         </button>
                     </li>
