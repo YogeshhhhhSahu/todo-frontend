@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";  // Import axios
 import "./TodoApp.css";
 
-const API_URL = "http://localhost:5000/api/tasks";  // Backend URL
+const API_URL = "hhttps://todo-backend-kxrz.onrender.com/api/todos";  // Backend URL
 
 function TodoApp() {
     const [tasks, setTasks] = useState([]);
